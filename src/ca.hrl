@@ -45,16 +45,16 @@
 -define(LOG(LogLevel, Format, Message, KvList),
   begin case LogLevel of
           debug ->
-            ?DEBUG(" ~p " ++ Format, [log:kv_generate(KvList)] ++ Message);
+            ?DEBUG(" ~p " ++ Format, [ca_log:kv_generate(KvList)] ++ Message);
           info ->
-            ?INFO(" ~p " ++ Format, [log:kv_generate(KvList)] ++ Message),
+            ?INFO(" ~p " ++ Format, [ca_log:kv_generate(KvList)] ++ Message),
             ?FALCON(KvList);
           warning ->
-            ?WARNING(" ~p " ++ Format, [log:kv_generate(KvList)] ++ Message),
+            ?WARNING(" ~p " ++ Format, [ca_log:kv_generate(KvList)] ++ Message),
             ?FALCON(KvList),
             ?NOTICE(LogLevel, KvList, Message);
           error ->
-            ?ERROR(" ~p " ++ Format, [log:kv_generate(KvList)] ++ Message),
+            ?ERROR(" ~p " ++ Format, [ca_log:kv_generate(KvList)] ++ Message),
             ?FALCON(KvList),
             ?NOTICE(LogLevel, KvList, Message)
         end end).

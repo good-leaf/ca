@@ -89,7 +89,8 @@ handle_cast({falcon, KvList}, State) ->
         true ->
             OpName = proplists:get_value(<<"op_name">>, KvList, <<>>),
             OpType = proplists:get_value(<<"op_type">>, KvList, <<>>),
-            ?SEND_EVENT(OpName, OpType);
+            OpValue = proplists:get_value(<<"op_value">>, KvList, 1),
+            ?SEND_EVENT(OpName, OpType, OpValue);
         false ->
             skip
     end,

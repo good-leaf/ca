@@ -181,12 +181,12 @@ notice_send(Body, Retry) ->
     Url = application:get_env(?APP_NAME, notice_url, "http://nt.csp.test.sankuai.com/v1/push_notice"),
     case httpc:request(post, {Url, [], "application/json", Body}, [{timeout, ?NT_TIMEOUT}], [{body_format, binary}]) of
         {ok, {{_Version,200, _Msg},_Server, ResBody}} ->
-            lager:info("notice url:~p, reqbody:~p, result:~p", [Url, Body, ResBody]);
+            error_logger:info_log("notice url:~p, reqbody:~p, result:~p", [Url, Body, ResBody]);
         {ok, Result}->
-            lager:error("notice url:~p, reqbody:~p, result:~p", [Url, Body, Result]),
+            error_logger:error_log("notice url:~p, reqbody:~p, result:~p", [Url, Body, Result]),
             notice_send(Body, Retry - 1);
         {error, Error} ->
-            lager:error("notice url:~p, reqbody:~p, error:~p", [Url, Body, Error]),
+            error_logger:error_log("notice url:~p, reqbody:~p, error:~p", [Url, Body, Error]),
             notice_send(Body, Retry - 1)
     end.
 

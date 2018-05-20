@@ -1,14 +1,4 @@
-%%%-------------------------------------------------------------------
-%%% @author yangyajun03
-%%% @copyright (C) 2018, <COMPANY>
-%%% @doc
-%%%
-%%% @end
-%%% Created : 11. 五月 2018 上午11:35
-%%%-------------------------------------------------------------------
 -module(notice).
--author("yangyajun03").
-
 -behaviour(gen_server).
 -include("ca.hrl").
 %% API
@@ -23,10 +13,10 @@
     code_change/3]).
 
 -export([
-    create_notice_event/5
+    create_notice/3
 ]).
 -define(SERVER, ?MODULE).
--define(TIMEVALE, 2000).
+-define(TIMEVALE, 3000).
 -define(NOTICE_TABLE, notice_table).
 -record(state, {}).
 
@@ -103,10 +93,19 @@ handle_call(_Request, _From, State) ->
     {noreply, NewState :: #state{}} |
     {noreply, NewState :: #state{}, timeout() | hibernate} |
     {stop, Reason :: term(), NewState :: #state{}}).
-handle_cast({notice, [Context, Reason, TargetUrl, TenantId, Level]}, State) ->
-    NewContext = list_to_binary(io_lib:format("~p", [Context])),
-    NewReason = list_to_binary(io_lib:format("~p", [Reason])),
-    notice_event(NewContext, NewReason, TargetUrl, TenantId, Level),
+handle_cast({notice, LogLevel, KvList, Message}, State) ->
+    case ?NT of
+        true ->
+            Reason = proplists:get_value(<<"reason">>, KvList, <<>>),
+            TargetUrl = proplists:get_value(<<"url">>, KvList, <<>>),
+            TenantId = proplists:get_value(<<"tenant">>, KvList, <<>>),
+            Level = ?NT_LEVEL(LogLevel),
+            NewContext = list_to_binary(io_lib:format("~p", [Message])),
+            NewReason = list_to_binary(io_lib:format("~p", [Reason])),
+            notice_event(NewContext, NewReason, TargetUrl, TenantId, Level);
+        false ->
+            skip
+    end,
     {noreply, State};
 handle_cast(_Request, State) ->
     {noreply, State}.
@@ -162,6 +161,9 @@ terminate(_Reason, _State) ->
 code_change(_OldVsn, State, _Extra) ->
     {ok, State}.
 
+create_notice(LogLevel, Kvlist, Message) ->
+    gen_server:cast(?SERVER, {notice, LogLevel, Kvlist, Message}).
+
 %%%===================================================================
 %%% Internal functions
 %%%===================================================================
@@ -187,10 +189,6 @@ notice_send(Body, Retry) ->
             lager:error("notice url:~p, reqbody:~p, error:~p", [Url, Body, Error]),
             notice_send(Body, Retry - 1)
     end.
-
-%NT服务按照Reason限制频率
-create_notice_event(Context, Reason, TargetUrl, TenantId, Level) ->
-    gen_server:cast(?SERVER, {notice, [Context, Reason, TargetUrl, TenantId, Level]}).
 
 notice_event(Context, Reason, TargetUrl, TenantId, Level) ->
     HostName = case application:get_env(?APP_NAME, hostname, undefined) of

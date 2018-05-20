@@ -1,16 +1,7 @@
-%%%-------------------------------------------------------------------
-%%% @author yangyajun03
-%%% @copyright (C) 2018, <COMPANY>
-%%% @doc
-%%%
-%%% @end
-%%% Created : 18. 五月 2018 下午12:03
-%%%-------------------------------------------------------------------
 -module(falcon).
--author("yangyajun03").
-
 -behaviour(gen_server).
 
+-include("ca.hrl").
 %% API
 -export([start_link/0]).
 
@@ -21,18 +12,10 @@
     handle_info/2,
     terminate/2,
     code_change/3]).
-
+-export([
+    create_falcon/1
+]).
 -define(SERVER, ?MODULE).
-
--define(INFORM_INCR, 0).
--define(INFORM_CURRENT, 1).
-
--define(OP_ADD, add).
--define(OP_SUB, sub).
--define(OP_UPDATE, update).
-
--define(FALCON_REGISTER(EVENT, InformType), mt_falcon:register(EVENT, InformType)).
--define(SEND_EVENT(Event, OP, Value), mt_falcon:send_event(Event, OP, Value)).
 
 -record(state, {}).
 
@@ -101,6 +84,16 @@ handle_call(_Request, _From, State) ->
     {noreply, NewState :: #state{}} |
     {noreply, NewState :: #state{}, timeout() | hibernate} |
     {stop, Reason :: term(), NewState :: #state{}}).
+handle_cast({falcon, KvList}, State) ->
+    case ?FALCON of
+        true ->
+            OpName = proplists:get_value(<<"op_name">>, KvList, <<>>),
+            OpType = proplists:get_value(<<"op_type">>, KvList, <<>>),
+            ?SEND_EVENT(OpName, OpType);
+        false ->
+            skip
+    end,
+    {noreply, State};
 handle_cast(_Request, State) ->
     {noreply, State}.
 
@@ -151,6 +144,8 @@ terminate(_Reason, _State) ->
 code_change(_OldVsn, State, _Extra) ->
     {ok, State}.
 
+create_falcon(KvList) ->
+    gen_server:cast(?SERVER, {falcon, KvList}).
 %%%===================================================================
 %%% Internal functions
 %%%===================================================================

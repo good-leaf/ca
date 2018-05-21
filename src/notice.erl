@@ -96,13 +96,12 @@ handle_call(_Request, _From, State) ->
 handle_cast({notice, LogLevel, KvList, Message}, State) ->
     case ?NT of
         true ->
-            Reason = proplists:get_value(<<"reason">>, KvList, <<>>),
-            TargetUrl = proplists:get_value(<<"url">>, KvList, <<>>),
-            TenantId = proplists:get_value(<<"tenant">>, KvList, <<>>),
+            Reason = proplists:get_value(<<"nt_reason">>, KvList, <<>>),
+            TargetUrl = proplists:get_value(<<"nt_url">>, KvList, <<>>),
+            TenantId = proplists:get_value(<<"nt_tenant">>, KvList, <<>>),
             Level = ?NT_LEVEL(LogLevel),
             NewContext = list_to_binary(io_lib:format("~p", [Message])),
-            NewReason = list_to_binary(io_lib:format("~p", [Reason])),
-            notice_event(NewContext, NewReason, TargetUrl, TenantId, Level);
+            notice_event(NewContext, Reason, TargetUrl, TenantId, Level);
         false ->
             skip
     end,
@@ -181,12 +180,12 @@ notice_send(Body, Retry) ->
     Url = application:get_env(?APP_NAME, notice_url, "http://nt.csp.test.sankuai.com/v1/push_notice"),
     case httpc:request(post, {Url, [], "application/json", Body}, [{timeout, ?NT_TIMEOUT}], [{body_format, binary}]) of
         {ok, {{_Version,200, _Msg},_Server, ResBody}} ->
-            error_logger:info_log("notice url:~p, reqbody:~p, result:~p", [Url, Body, ResBody]);
+            error_logger:info_msg("notice url:~p, reqbody:~p, result:~p", [Url, Body, ResBody]);
         {ok, Result}->
-            error_logger:error_log("notice url:~p, reqbody:~p, result:~p", [Url, Body, Result]),
+            error_logger:error_msg("notice url:~p, reqbody:~p, result:~p", [Url, Body, Result]),
             notice_send(Body, Retry - 1);
         {error, Error} ->
-            error_logger:error_log("notice url:~p, reqbody:~p, error:~p", [Url, Body, Error]),
+            error_logger:error_msg("notice url:~p, reqbody:~p, error:~p", [Url, Body, Error]),
             notice_send(Body, Retry - 1)
     end.
 

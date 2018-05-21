@@ -25,9 +25,9 @@ test() ->
   ?LOG(debug, "~p", [<<"error message">>], [{<<"op_name">>, <<"error">>}, {<<"op_type">>, add}, {<<"op_value">>, 1}]),
   ?LOG(info, "~p", [<<"error message">>], [{<<"op_name">>, <<"error">>}, {<<"op_type">>, add}, {<<"op_value">>, 1}]),
   ?LOG(warning, "~p", [<<"error message">>], [{<<"op_name">>, <<"error">>}, {<<"op_type">>, add}, {<<"op_value">>, 1},
-    {<<"reason">>, <<"normal">>}, {<<"url">>, <<"www.abc.com">>}, {<<"tenant">>, <<"123456">>}]),
+    {<<"nt_reason">>, <<"stop">>}, {<<"nt_url">>, <<"www.abc.com">>}, {<<"nt_tenant">>, <<"123456">>}]),
   ?LOG(error, "~p", [<<"error message">>], [{<<"op_name">>, <<"error">>}, {<<"op_type">>, add}, {<<"op_value">>, 1},
-    {<<"reason">>, <<"normal">>}, {<<"url">>, <<"www.abc.com">>}, {<<"tenant">>, <<"123456">>}]).
+    {<<"nt_reason">>, <<"normal">>}, {<<"nt_url">>, <<"www.abc.com">>}, {<<"nt_tenant">>, <<"123456">>}]).
 
 
 

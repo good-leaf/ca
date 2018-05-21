@@ -17,7 +17,7 @@
 ]).
 -define(SERVER, ?MODULE).
 -define(TIMEVALE, 3000).
--define(NOTICE_TABLE, notice_table).
+-define(NOTICE_TABLE, ca_notice_table).
 -record(state, {}).
 
 %%%===================================================================

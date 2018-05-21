@@ -88,7 +88,7 @@ handle_cast({falcon, KvList}, State) ->
     case ?FALCON of
         true ->
             OpName = proplists:get_value(<<"op_name">>, KvList, <<>>),
-            OpType = proplists:get_value(<<"op_type">>, KvList, <<>>),
+            OpType = proplists:get_value(<<"op_type">>, KvList, add),
             OpValue = proplists:get_value(<<"op_value">>, KvList, 1),
             ?SEND_EVENT(OpName, OpType, OpValue);
         false ->

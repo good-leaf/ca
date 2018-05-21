@@ -87,10 +87,14 @@ handle_call(_Request, _From, State) ->
 handle_cast({falcon, KvList}, State) ->
     case ?CA_FALCON of
         true ->
-            OpName = proplists:get_value(<<"op_name">>, KvList, <<>>),
-            OpType = proplists:get_value(<<"op_type">>, KvList, add),
-            OpValue = proplists:get_value(<<"op_value">>, KvList, 1),
-            ?SEND_EVENT(OpName, OpType, OpValue);
+            case proplists:get_value(<<"op_name">>, KvList) of
+                undefined ->
+                    skip;
+                OpName ->
+                    OpType = proplists:get_value(<<"op_type">>, KvList, add),
+                    OpValue = proplists:get_value(<<"op_value">>, KvList, 1),
+                    ?SEND_EVENT(OpName, OpType, OpValue)
+            end;
         false ->
             skip
     end,

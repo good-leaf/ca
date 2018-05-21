@@ -96,12 +96,16 @@ handle_call(_Request, _From, State) ->
 handle_cast({notice, LogLevel, KvList, Message}, State) ->
     case ?NT of
         true ->
-            Reason = proplists:get_value(<<"nt_reason">>, KvList, <<>>),
-            TargetUrl = proplists:get_value(<<"nt_url">>, KvList, <<>>),
-            TenantId = proplists:get_value(<<"nt_tenant">>, KvList, <<>>),
-            Level = ?NT_LEVEL(LogLevel),
-            NewContext = list_to_binary(io_lib:format("~p", [Message])),
-            notice_event(NewContext, Reason, TargetUrl, TenantId, Level);
+            case proplists:get_value(<<"nt_reason">>, KvList) of
+                undefined ->
+                    skip;
+                Reason ->
+                    TargetUrl = proplists:get_value(<<"nt_url">>, KvList, <<>>),
+                    TenantId = proplists:get_value(<<"nt_tenant">>, KvList, <<>>),
+                    Level = ?NT_LEVEL(LogLevel),
+                    NewContext = list_to_binary(io_lib:format("~p", [Message])),
+                    notice_event(NewContext, Reason, TargetUrl, TenantId, Level)
+            end;
         false ->
             skip
     end,

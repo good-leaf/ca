@@ -177,7 +177,7 @@ notice() ->
 notice_send(_Body, 0) ->
     ok;
 notice_send(Body, Retry) ->
-    Url = application:get_env(?APP_NAME, notice_url, "http://nt.csp.test.sankuai.com/v1/push_notice"),
+    Url = application:get_env(ca, notice_url, "http://nt.csp.test.sankuai.com/v1/push_notice"),
     case httpc:request(post, {Url, [], "application/json", Body}, [{timeout, ?NT_TIMEOUT}], [{body_format, binary}]) of
         {ok, {{_Version,200, _Msg},_Server, ResBody}} ->
             error_logger:info_msg("notice url:~p, reqbody:~p, result:~p", [Url, Body, ResBody]);
@@ -190,17 +190,17 @@ notice_send(Body, Retry) ->
     end.
 
 notice_event(Context, Reason, TargetUrl, TenantId, Level) ->
-    HostName = case application:get_env(?APP_NAME, hostname, undefined) of
+    HostName = case application:get_env(ca, hostname, undefined) of
                    undefined ->
                        {ok, Host} = inet:gethostname(),
                        BHost = list_to_binary(Host),
-                       application:set_env(?APP_NAME, hostname, BHost),
+                       application:set_env(ca, hostname, BHost),
                        BHost;
                    HName ->
                        HName
                end,
 
-    ServerName = application:get_env(?APP_NAME, service_name, atom_to_binary(?APP_NAME, utf8)),
+    ServerName = application:get_env(ca, service_name, atom_to_binary(ca, utf8)),
 
     case ets:lookup(?NOTICE_TABLE, Reason) of
         [] ->

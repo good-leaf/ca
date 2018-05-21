@@ -85,7 +85,7 @@ handle_call(_Request, _From, State) ->
     {noreply, NewState :: #state{}, timeout() | hibernate} |
     {stop, Reason :: term(), NewState :: #state{}}).
 handle_cast({falcon, KvList}, State) ->
-    case ?FALCON of
+    case ?CA_FALCON of
         true ->
             OpName = proplists:get_value(<<"op_name">>, KvList, <<>>),
             OpType = proplists:get_value(<<"op_type">>, KvList, add),

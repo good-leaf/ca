@@ -17,7 +17,7 @@
 ]).
 -define(SERVER, ?MODULE).
 -define(TIMEVALE, 3000).
--define(NOTICE_TABLE, notice_table).
+-define(NOTICE_TABLE, ca_notice_table).
 -record(state, {}).
 
 %%%===================================================================
@@ -96,13 +96,16 @@ handle_call(_Request, _From, State) ->
 handle_cast({notice, LogLevel, KvList, Message}, State) ->
     case ?NT of
         true ->
-            Reason = proplists:get_value(<<"reason">>, KvList, <<>>),
-            TargetUrl = proplists:get_value(<<"url">>, KvList, <<>>),
-            TenantId = proplists:get_value(<<"tenant">>, KvList, <<>>),
-            Level = ?NT_LEVEL(LogLevel),
-            NewContext = list_to_binary(io_lib:format("~p", [Message])),
-            NewReason = list_to_binary(io_lib:format("~p", [Reason])),
-            notice_event(NewContext, NewReason, TargetUrl, TenantId, Level);
+            case proplists:get_value(<<"nt_reason">>, KvList) of
+                undefined ->
+                    skip;
+                Reason ->
+                    TargetUrl = proplists:get_value(<<"nt_url">>, KvList, <<>>),
+                    TenantId = proplists:get_value(<<"nt_tenant">>, KvList, <<>>),
+                    Level = ?NT_LEVEL(LogLevel),
+                    NewContext = list_to_binary(io_lib:format("~p", [Message])),
+                    notice_event(NewContext, Reason, TargetUrl, TenantId, Level)
+            end;
         false ->
             skip
     end,
@@ -178,30 +181,30 @@ notice() ->
 notice_send(_Body, 0) ->
     ok;
 notice_send(Body, Retry) ->
-    Url = application:get_env(?APP_NAME, notice_url, "http://nt.csp.test.sankuai.com/v1/push_notice"),
+    Url = application:get_env(ca, notice_url, "http://nt.csp.test.sankuai.com/v1/push_notice"),
     case httpc:request(post, {Url, [], "application/json", Body}, [{timeout, ?NT_TIMEOUT}], [{body_format, binary}]) of
         {ok, {{_Version,200, _Msg},_Server, ResBody}} ->
-            error_logger:info_log("notice url:~p, reqbody:~p, result:~p", [Url, Body, ResBody]);
+            error_logger:info_msg("notice url:~p, reqbody:~p, result:~p", [Url, Body, ResBody]);
         {ok, Result}->
-            error_logger:error_log("notice url:~p, reqbody:~p, result:~p", [Url, Body, Result]),
+            error_logger:error_msg("notice url:~p, reqbody:~p, result:~p", [Url, Body, Result]),
             notice_send(Body, Retry - 1);
         {error, Error} ->
-            error_logger:error_log("notice url:~p, reqbody:~p, error:~p", [Url, Body, Error]),
+            error_logger:error_msg("notice url:~p, reqbody:~p, error:~p", [Url, Body, Error]),
             notice_send(Body, Retry - 1)
     end.
 
 notice_event(Context, Reason, TargetUrl, TenantId, Level) ->
-    HostName = case application:get_env(?APP_NAME, hostname, undefined) of
+    HostName = case application:get_env(ca, hostname, undefined) of
                    undefined ->
                        {ok, Host} = inet:gethostname(),
                        BHost = list_to_binary(Host),
-                       application:set_env(?APP_NAME, hostname, BHost),
+                       application:set_env(ca, hostname, BHost),
                        BHost;
                    HName ->
                        HName
                end,
 
-    ServerName = application:get_env(?APP_NAME, service_name, atom_to_binary(?APP_NAME, utf8)),
+    ServerName = application:get_env(ca, service_name, atom_to_binary(ca, utf8)),
 
     case ets:lookup(?NOTICE_TABLE, Reason) of
         [] ->
